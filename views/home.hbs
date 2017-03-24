@@ -1,0 +1,32 @@
+<script src="js/jsencrypt.min.js"></script>
+<script type="text/javascript">
+    generateKeys = function () {
+      var keySize = 4096;
+      var crypt = new JSEncrypt({ default_key_size: keySize });
+      var dt = new Date();
+      var time = -(dt.getTime());
+      crypt.getKey();
+      dt = new Date();
+      time += (dt.getTime());
+      return {priv_key: crypt.getPrivateKey(), pub_key: crypt.getPublicKey()};
+    };
+    establish_connection = function () {
+        var conn_keypair = generateKeys();
+        
+    }
+</script>
+<div class=header>
+
+</div>
+{{#if message}}
+    <div> {{message}}</div>
+{{/if}}
+{{#if user}}
+    <p>Hello, {{user.username}}. View your <a href="/profile">profile</a>.</p>
+{{else}}
+    <p>Welcome! <br>
+    If you have account, please <a href="/login">log in</a>. <br>
+    If you are new, please <a href="/register">register</a> new account. <br>
+    If you forgot password, please <a href="/forgotpassword">reset</a> password. <br>
+    </p>
+{{/if}}
