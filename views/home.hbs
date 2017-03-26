@@ -1,6 +1,6 @@
 <script src="/js/jquery-3.2.0.min.js"></script>
 <script src="/js/jsencrypt.min.js"></script>
-<script src="/js/socket.io.js"></script>
+<script src="/js/socket.io.min.js"></script>
 <script src="/js/sha/sha.js"></script>
 <script src="/js/pbkdf2/sha1.js"></script>
 <script src="/js/pbkdf2/pbkdf2.js"></script>
@@ -16,13 +16,19 @@
         socket.on('conn_acknowledge', function (server_pub_key) { // listen to connection acknowledgement
             console.log ("connection acknowledgement received!");
             console.log (server_pub_key);
-            socket.server_pub_key = server_pub_key;
+            socket.server_pub_key = server_pub_key.svr_pub_key;
             var shaObj = new jsSHA("SHA-256", "TEXT");
             shaObj.update("user:eduard,password:123");
             var user_info_hash = shaObj.getHash("HEX");
+            console.log ("user hash info : ");
+            console.log (user_info_hash);
+            console.log ("server public key : ");
+            console.log (socket.server_pub_key);
             var encrypt = new JSEncrypt();
             encrypt.setPublicKey(socket.server_pub_key);
             var encrypted_user_info_hash = encrypt.encrypt(user_info_hash);
+            console.log ("encrypted user hash : ");
+            console.log (encrypted_user_info_hash);
             socket.emit('hash_info', {hash_val: encrypted_user_info_hash}); // raise an event on the server
         });
 
@@ -54,6 +60,7 @@
             mypbkdf2.deriveKey(status_callback, result_callback);
         });
     }
+    establish_connection ();
 </script>
 <div class=header>
 

@@ -27,9 +27,11 @@ module.exports = function (io) {
       console.log ('received encrypted user hash_info : ');
       console.log (hash_info);
       var privateKey = ursa.coercePrivateKey(socket.server_keypair.toPrivatePem('utf8'));
+      console.log ('server private key : ');
+      console.log (socket.server_keypair.toPrivatePem('utf8'));
       var i = 0;
       var decipher;
-      socket.client_hashinfo = privateKey.decrypt(encData, 'base64', 'utf8');
+      socket.client_hashinfo = privateKey.decrypt(hash_info.hash_val, 'base64', 'utf8');
       console.log (socket.client_hashinfo);
 
       decipher = crypto.createDecipher('aes-256-ctr', socket.client_hashinfo);
