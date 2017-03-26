@@ -1,18 +1,54 @@
-<script src="js/jsencrypt.min.js"></script>
+<script src="/js/jquery-3.2.0.min.js"></script>
+<script src="/js/jsencrypt.min.js"></script>
+<script src="/js/socket.io.js"></script>
+<script src="/js/sha/sha.js"></script>
+<script src="/js/pbkdf2/sha1.js"></script>
+<script src="/js/pbkdf2/pbkdf2.js"></script>
 <script type="text/javascript">
-    generateKeys = function () {
-      var keySize = 4096;
-      var crypt = new JSEncrypt({ default_key_size: keySize });
-      var dt = new Date();
-      var time = -(dt.getTime());
-      crypt.getKey();
-      dt = new Date();
-      time += (dt.getTime());
-      return {priv_key: crypt.getPrivateKey(), pub_key: crypt.getPublicKey()};
-    };
     establish_connection = function () {
-        var conn_keypair = generateKeys();
-        
+        var keySize = 4096;
+        var crypt = new JSEncrypt({ default_key_size: keySize });
+        crypt.getKey();
+        var conn_keypair = {priv_key: crypt.getPrivateKey(), pub_key: crypt.getPublicKey()};
+        var socket = io.connect(window.location.origin); // connect to server
+        socket.keypair = conn_keypair;
+        socket.emit('conn_request', {user_pub_key : conn_keypair.pub_key}); // request new connection to the server
+        socket.on('conn_acknowledge', function (server_pub_key) { // listen to connection acknowledgement
+            console.log ("connection acknowledgement received!");
+            console.log (server_pub_key);
+            socket.server_pub_key = server_pub_key;
+            var shaObj = new jsSHA("SHA-256", "TEXT");
+            shaObj.update("user:eduard,password:123");
+            var user_info_hash = shaObj.getHash("HEX");
+            var encrypt = new JSEncrypt();
+            encrypt.setPublicKey(socket.server_pub_key);
+            var encrypted_user_info_hash = encrypt.encrypt(user_info_hash);
+            socket.emit('hash_info', {hash_val: encrypted_user_info_hash}); // raise an event on the server
+        });
+
+        socket.on('receive_masterkey', function (encrypted_master_key) {
+            // Decrypt with the master key...
+            var decrypt = new JSEncrypt();
+            decrypt.setPrivateKey(socket.keypair.priv_key);
+            socket.masterkey = decrypt.decrypt(encrypted_master_key);
+
+            var mypbkdf2 = new PBKDF2(socket.masterkey, "saltines", 1000, 16);
+
+            var status_callback = function(percent_done) {
+                document.getElementById("status").innerHTML = "Computed " + percent_done + "%"};
+
+            var result_callback = function(key) {
+                socket.derivekey = key;
+                socket.masterkey = null;
+
+                var encrypt = new JSEncrypt();
+                encrypt.setPublicKey(socket.server_pub_key);
+                var encrypted_user_session_key = encrypt.encrypt(socket.derivekey);
+                socket.emit('user_session_key', encrypted_user_session_key); // raise an event on the server
+            }
+
+            mypbkdf2.deriveKey(status_callback, result_callback);
+        });
     }
 </script>
 <div class=header>
