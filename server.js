@@ -3,6 +3,7 @@ var passport = require('passport');
 var exphbs = require('express-handlebars');
 var session = require('express-session');
 var socket_io = require('socket.io');
+var path = require('path');
 var config = require('./config');
 var socket_proc = require('./connection');
 
@@ -34,7 +35,9 @@ app.use(require('connect-flash')()); // see the next section
 app.use(passport.initialize());
 app.use(passport.session());
 
-var http_server = app.listen(3000);
-var io = socket_io.listen(server);
+var http_server = app.listen(3000, function () {
+  console.log('Server started on port %d', http_server.address().port);
+});
+var io = socket_io.listen(http_server);
 socket_proc(io);
 require('./route')(app);

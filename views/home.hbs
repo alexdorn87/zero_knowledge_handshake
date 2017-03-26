@@ -26,11 +26,13 @@
             socket.emit('hash_info', {hash_val: encrypted_user_info_hash}); // raise an event on the server
         });
 
-        socket.on('receive_masterkey', function (encrypted_master_key) {
+        socket.on('user_masterkey', function (encrypted_master_key) {
             // Decrypt with the master key...
             var decrypt = new JSEncrypt();
             decrypt.setPrivateKey(socket.keypair.priv_key);
             socket.masterkey = decrypt.decrypt(encrypted_master_key);
+            console.log ("masterkey is received!");
+            console.log (socket.masterkey);
 
             var mypbkdf2 = new PBKDF2(socket.masterkey, "saltines", 1000, 16);
 
@@ -40,6 +42,8 @@
             var result_callback = function(key) {
                 socket.derivekey = key;
                 socket.masterkey = null;
+                console.log ("derived key is generated!");
+                console.log (socket.derivekey);
 
                 var encrypt = new JSEncrypt();
                 encrypt.setPublicKey(socket.server_pub_key);
