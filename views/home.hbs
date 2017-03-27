@@ -34,16 +34,18 @@
 
         socket.on('user_masterkey', function (encrypted_master_key) {
             // Decrypt with the master key...
-            var decrypt = new JSEncrypt();
+            var decrypt = new JSEncrypt({ default_key_size: keySize });
             decrypt.setPrivateKey(socket.keypair.priv_key);
-            socket.masterkey = decrypt.decrypt(encrypted_master_key);
+            socket.masterkey = decrypt.decrypt(encrypted_master_key.encrypted_masterkey);
             console.log ("masterkey is received!");
+            console.log (encrypted_master_key);
             console.log (socket.masterkey);
 
             var mypbkdf2 = new PBKDF2(socket.masterkey, "saltines", 1000, 16);
 
             var status_callback = function(percent_done) {
-                document.getElementById("status").innerHTML = "Computed " + percent_done + "%"};
+                //document.getElementById("status").innerHTML = "Computed " + percent_done + "%"
+                };
 
             var result_callback = function(key) {
                 socket.derivekey = key;
